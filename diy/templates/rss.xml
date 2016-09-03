@@ -5,7 +5,7 @@
         <link>{{ link }}</link>
         <description>{{ description }}</description>
         <language>zh-cn</language>
-        <copyright>Copyright 2015, Timmy</copyright>
+        <copyright>Copyright 2016, maijver</copyright>
         <pubDate>{{ pubdate }}</pubDate>
         {% for item in items %}
         <item>
