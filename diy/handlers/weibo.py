@@ -3,45 +3,55 @@
 import tornado.web
 import tornado.httpclient
 import tornado.gen
-import lxml.html
-import re
-
-from utils.filters import weibodate
-from configs import WEIBO_URL, WEIBO_LINK
+import json
+from pyquery import PyQuery as pq
+from utils.filters import weibodate, id2mid
+from configs import WEIBO_URL, WEIBO_LINK, NEW_WEIBO_URL
 
 
 class WeiboHandler(tornado.web.RequestHandler):
     @tornado.gen.coroutine
     def get(self):
         uid = self.get_argument('uid', None)
-        print uid
         if uid and uid.isdigit() and len(uid) == 10:
             self.uid = uid
             client = tornado.httpclient.AsyncHTTPClient()
-            response = yield client.fetch(WEIBO_URL.format(uid=uid))
+            response = yield client.fetch(NEW_WEIBO_URL.format(uid=uid))
 
             if response.error:
                 raise tornado.web.HTTPError(response.code)
             else:
-                root = lxml.html.fromstring(response.body.decode('utf-8'))
-                author = root.xpath('//*[@id="widget_wapper"]/div/div[1]/div[2]/div[1]/text()')[0]
-                title = u'{author}的微博'.format(author=author)
+                cards = json.loads(response.body)['cards']
+                title = u'{author}的微博'.format(author=cards[0]['mblog']['user']['screen_name'])
                 items = []
-                for t in root.xpath('//*[@id="content_all"]/*/div[@class="wgtCell_con"]'):
+                for card in cards:
                     item = {}
-                    content = t.xpath('p[@class="wgtCell_txt"]')[0]
-                    # convert thumbnail to bigpic
-                    content_string = lxml.html.tostring(content, encoding='unicode')
-                    content_string = re.sub('src="http://\w{3}.sinaimg.cn/thumbnail/','src="http://ww3.sinaimg.cn/mw690/', content_string)
-                    
-                    item['content'] = content_string
-                    # print item['content']
-                    item['title'] = content.text_content().split('\n')[0]
-                    link = t.xpath('div/span[@class="wgtCell_tm"]/a')[0]
-                    item['link'] = link.get('href')
-                    item['created'] = weibodate(link.text)
+                    content = card['mblog']['text']
+                    if card['mblog'].get('retweeted_status', None):
+                        content += "//"
+                        content += card['mblog']['retweeted_status']['text']
+                        if card['mblog']['retweeted_status'].get('pics', None):
+                            retweeted_pics = ''
+                            for each in card['mblog']['retweeted_status']['pics']:
+                                retweeted_pics += "<img src=%s />" % each['large']['url']
+                            content += retweeted_pics
+
+                    if card['mblog'].get('pics', None):
+                        pics = ''
+                        for each in card['mblog']['pics']:
+                            pics += "<img src=%s />" % each['large']['url']
+                        content += pics
+                    title = pq(card['mblog']['text']).text()
+                    mid = id2mid(card['mblog']['id'])
+                    link = "http://weibo.com/%s/%s" % (self.uid, mid)
+                    created = weibodate(card['mblog']['created_at'])
+
+                    item['content'] = content
+                    item['title'] = title
+                    item['link'] = link
+                    item['created'] = created
                     item['guid'] = item['link']
-                    item['author'] = author
+                    item['author'] = card['mblog']['user']['screen_name']
                     items.append(item)
                 pubdate = items[0]['created']
                 link = WEIBO_URL.format(uid=uid)
