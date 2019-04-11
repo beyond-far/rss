@@ -1,18 +1,22 @@
 # coding:utf-8
 
-import random, re, base64, time, json
+import base64
+import json
+import random
+import re
+import time
 
-import lxml.html, lxml.etree
+import lxml.etree
+import lxml.html
 from Crypto.Cipher import AES
 
 from filters import weixindate
-
 
 _COOKIE_RE = re.compile(r'(ABTEST=\S+?|SNUID=\S+?|IPLOC=\S+?|SUID=\S+?|black_passportid=\S+?);')
 
 
 def _get_suv():
-    return '='.join(['SUV', str(int(time.time()*1000000) + random.randint(0, 1000))])
+    return '='.join(['SUV', str(int(time.time() * 1000000) + random.randint(0, 1000))])
 
 
 def process_cookie(cookie):
@@ -39,7 +43,7 @@ def process_eqs(key, secret, setting):
 
 
 def process_jsonp(r):
-    j = r[r.find('{'):r.rfind('}')+1]
+    j = r[r.find('{'):r.rfind('}') + 1]
     items = json.loads(j)['items']
     l = []
     for item in items:
@@ -55,6 +59,7 @@ def process_jsonp(r):
 
 
 _COVER_RE = re.compile(r'cover = "(http://.+)";')
+
 
 def process_content(html):
     root = lxml.html.fromstring(html)

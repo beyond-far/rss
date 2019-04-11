@@ -1,6 +1,7 @@
 import threading
-from tornado import template, web
+
 import jinja2
+from tornado import template
 
 
 class TTemplate(object):

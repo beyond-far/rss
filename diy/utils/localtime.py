@@ -1,8 +1,8 @@
 # coding:utf-8
 
 import datetime
-import pytz
 
+import pytz
 
 tz = pytz.timezone('Asia/Shanghai')
 

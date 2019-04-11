@@ -1,12 +1,13 @@
 # coding:utf-8
 
-import tornado.web
-import tornado.httpclient
-import tornado.gen
 import json
+
+import tornado.gen
+import tornado.httpclient
+import tornado.web
+from configs import NEW_WEIBO_URL, NEW_WEIBO_API
 from pyquery import PyQuery as pq
 from utils.filters import weibodate, id2mid
-from configs import WEIBO_URL, WEIBO_LINK, NEW_WEIBO_URL, NEW_WEIBO_API
 
 
 class WeiboHandler(tornado.web.RequestHandler):
